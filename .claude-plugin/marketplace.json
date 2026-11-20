@@ -1,0 +1,17 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "repair-guide",
+  "version": "0.1.0",
+  "description": "Single-plugin marketplace hosting repair-guide",
+  "owner": { "name": "MrMosesMichael" },
+  "plugins": [
+    {
+      "name": "repair-guide",
+      "description": "Turn automotive repair videos into step-by-step guides with screenshots, tools, torque specs, and timestamp links.",
+      "version": "0.1.0",
+      "source": "./",
+      "category": "productivity",
+      "author": { "name": "MrMosesMichael" }
+    }
+  ]
+}

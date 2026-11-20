@@ -1,0 +1,40 @@
+[project]
+name = "repair-guide"
+version = "0.1.0"
+description = "Turn automotive repair videos into step-by-step guides with screenshots, tool lists, torque specs, and timestamp links."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE", "NOTICE"]
+authors = [{ name = "MrMosesMichael" }]
+requires-python = ">=3.11"
+keywords = ["automotive", "repair", "youtube", "torque", "screenshots", "claude-code"]
+dependencies = [
+    "yt-dlp[default]>=2026.10.0",
+    "imageio-ffmpeg>=0.6.0",
+    "pillow>=11.0",
+    "pydantic>=2.9",
+]
+
+[project.optional-dependencies]
+# Local speech-to-text for videos without captions (e.g. your own GoPro footage).
+# onnxruntime dropped Intel-Mac wheels after 1.19, so pin it there only.
+transcribe = [
+    "faster-whisper>=1.1",
+    "onnxruntime<1.20; sys_platform == 'darwin' and platform_machine == 'x86_64'",
+]
+
+[project.scripts]
+repair-guide = "repair_guide.cli:main"
+
+[project.urls]
+Repository = "https://github.com/MrMosesMichael/youtube-extract-repair-guide"
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[build-system]
+requires = ["uv_build>=0.9.27,<0.10.0"]
+build-backend = "uv_build"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

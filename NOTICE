@@ -1,0 +1,27 @@
+repair-guide (youtube-extract-repair-guide)
+Copyright (c) 2026 MrMosesMichael — MIT License (see LICENSE)
+
+This project was designed with reference to, and borrows ideas from, the
+following open-source projects. No source files were copied verbatim; the
+approaches below were re-implemented for automotive repair use.
+
+1. claude-code-youtube-extract
+   https://github.com/muckybuzzwoo/claude-code-youtube-extract
+   Copyright (c) Mucky / buzzwoo — Apache License 2.0
+   Ideas used: packaging as a Claude Code plugin + skill backed by a Python
+   script; yt-dlp metadata/caption retrieval; ffmpeg scene-score frame
+   detection (`select='gt(scene,T)'`) with a minimum gap; perceptual
+   de-duplication of near-identical frames via tiny grayscale thumbnails.
+
+2. youtube-practice-guide
+   https://github.com/LongJingSU/youtube-practice-guide
+   Copyright (c) LongJingSU — MIT License
+   Ideas used: contact sheets of timestamped frames for the model to review;
+   the "guide supplements the video, it doesn't replace it" principle with a
+   timestamp on every step; self-contained HTML output with embedded images
+   alongside archival Markdown.
+
+Third-party runtime dependencies (installed separately, not bundled):
+  yt-dlp (Unlicense), imageio-ffmpeg (BSD-2-Clause; downloads an LGPL/GPL
+  FFmpeg build), Pillow (MIT-CMU), pydantic (MIT), faster-whisper (MIT,
+  optional), onnxruntime (MIT, optional).

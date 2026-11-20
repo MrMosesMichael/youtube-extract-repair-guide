@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+
+# Generated guides / working files (never commit downloaded videos)
+guides/
+work/
+*.mp4
+*.mkv
+*.webm
+*.MP4
+*.LRV
+*.vtt
+*.sqlite
+
+# OS
+.DS_Store
