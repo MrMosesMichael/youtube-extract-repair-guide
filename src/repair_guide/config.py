@@ -14,6 +14,9 @@ DEFAULTS = {
     "max_height": 1080,
     "caption_langs": ["en"],
     "whisper_model": "base.en",
+    "joplin_notebook": "Repair Guides",  # top notebook; guides go in a per-vehicle sub-notebook
+    "joplin_url": "",  # blank = find the Web Clipper service on 127.0.0.1:41184+
+    "joplin_token": "",  # blank = read it from Joplin desktop's settings.json
     "manuals": {},  # name -> {"path": "...", "index": "...", "pages": N, "torque_lines": N}
 }
 

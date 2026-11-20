@@ -103,9 +103,12 @@ The full schema is in `repair-guide schema`. Shape:
   }],
   "torque_specs": [{"id": "caliper-bracket-bolt", "fastener": "Caliper bracket bolts (front)",
     "value": 300, "unit": "Nm", "sources": [{"kind": "manual", "ref": "...", "quote": "..."}]}],
-  "reassembly_notes": ["..."]
+  "reassembly_notes": ["..."],
+  "tags": ["brakes"]
 }
 ```
+
+`tags` are 1–3 lowercase Joplin tags for the system worked on (brakes, steering, suspension, cooling, electrical…). The vehicle tag and spec flags are added automatically.
 
 If the video only shows removal, still add the reinstall torque refs to the removal steps and use `reassembly_notes` for the way back together.
 
@@ -115,7 +118,18 @@ repair-guide build "$G"
 
 Fix any validation errors it prints and rebuild. Then Read 2–3 of the exported `$G/images/*.jpg` to confirm they show what the captions claim. Fix `frame_t` and rebuild if not.
 
-## 7. Report back
+## 7. Push to Joplin
+
+```bash
+repair-guide joplin push "$G" --if-available
+```
+
+- It prints `Joplin push skipped: …` when Joplin isn't running or its Web Clipper service is off. Mention that in the report with the fix (Joplin › Settings › Web Clipper › Enable Web Clipper Service, then `repair-guide joplin push "$G"`); don't treat it as a failure.
+- Exit code 3 means the user edited the note inside Joplin since the last push. **Ask them** before re-running with `--force`, which overwrites their edits.
+- A 403/token error: suggest `repair-guide joplin auth` (they click Grant in Joplin).
+- Re-pushing after a rebuild updates the same note in place and only re-uploads changed images.
+
+## 8. Report back
 
 Tell the user:
 - the paths to `guide.md` (plus `images/`) and `guide.html`
@@ -123,6 +137,8 @@ Tell the user:
 - each torque spec and its source, and any **SPEC NEEDED** or **unverified** items
 - any conflicts you noticed (socket size mismatches, video vs manual)
 
-Joplin: File › Import › "MD - Markdown (Directory)" on the guide folder brings in `guide.md` with its images. `guide.html` is one self-contained file that can be AirDropped to a phone.
+- whether the Joplin note was created or updated, and its notebook (or why the push was skipped)
+
+`guide.html` is one self-contained file that can be AirDropped to a phone.
 
 Offer `repair-guide clean "$G"` to delete the downloaded video once they're happy (local source videos are never deleted).

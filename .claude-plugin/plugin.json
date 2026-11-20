@@ -1,7 +1,7 @@
 {
   "name": "repair-guide",
   "description": "Turn automotive repair videos into step-by-step guides: per-step screenshots, tools and socket sizes, torque specs (N·m / ft·lb / in·lb) from the video or your service manual, and timestamp links.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "author": { "name": "MrMosesMichael" },
   "repository": "https://github.com/MrMosesMichael/youtube-extract-repair-guide",
   "license": "MIT",

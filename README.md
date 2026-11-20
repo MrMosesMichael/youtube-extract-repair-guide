@@ -6,7 +6,8 @@ Turn an automotive repair video into a guide you can follow in the garage:
 - **Tools per step** list exact sizes ("18mm socket", "T50 Torx"), plus a merged checklist of everything to pull out of the toolbox.
 - **Torque specs for reassembly** in N·m, ft·lb, and in·lb for light specs (N·cm for tiny ones). Each spec cites its source: the video at a timestamp, your service manual page, or a web page flagged *unverified*. Missing specs say **SPEC NEEDED** instead of being guessed.
 - **▶ timestamp links** on every step and screenshot jump into the video at that moment, so you can watch the bit you need.
-- Output is **Markdown + images**, which imports straight into Joplin, Obsidian and the like, plus a **self-contained HTML** file for your phone. The HTML has tick-off checkboxes and dark mode.
+- **Pushes straight into Joplin** as a note with the screenshots attached, filed under a per-vehicle notebook and tagged. Re-pushing after an edit updates the same note.
+- Also writes **Markdown + images** for Obsidian and the like, plus a **self-contained HTML** file for your phone. The HTML has tick-off checkboxes and dark mode.
 
 It works on YouTube URLs and on **your own footage** (GoPro etc.). Local files without captions are transcribed on-device with Whisper.
 
@@ -88,7 +89,22 @@ source.json       video metadata
 work/             video, transcript, contact sheets (`repair-guide clean` frees the space)
 ```
 
-**Joplin:** File › Import › *MD - Markdown (Directory)* → pick the guide folder. Your existing Joplin sync puts it on your phone.
+### Joplin
+
+Turn on Joplin's local API once: **Settings › Web Clipper › Enable Web Clipper Service** (no browser extension needed). After that, `/repair-guide` pushes every finished guide automatically, or push by hand:
+
+```bash
+repair-guide joplin status                 # API reachable? token OK?
+repair-guide joplin push ~/RepairGuides/<guide>
+```
+
+- **Notebook:** `Repair Guides › <vehicle>`. With `--vehicle silverado` the sub-notebook is named after the manual folder, so every guide for that truck lands together. Override with `--notebook 'Truck/Steering'`, or change the top level with `repair-guide config --set joplin_notebook=Garage`.
+- **Images** become Joplin attachments, so they sync to the phone app. Tapping one opens the video at that moment.
+- **Tags:** `repair-guide`, the vehicle, the system (`brakes`, `steering`…), plus `spec-needed` / `unverified-spec` when a torque spec is missing or web-only.
+- **Re-push** updates the same note in place, re-uploads only changed images, and deletes the ones no longer used. If you edited the note inside Joplin, it stops and asks for `--force` rather than overwrite your edits. If you moved the note to another notebook, it stays there. Your own tags are never removed.
+- **Token:** read from Joplin desktop's own settings. If that fails, `repair-guide joplin auth` asks Joplin for one (click *Grant* in Joplin).
+
+Prefer importing by hand? File › Import › *MD - Markdown (Directory)* on the guide folder works too.
 
 ### CLI reference
 
@@ -97,6 +113,8 @@ repair-guide prepare <url|file> [--vehicle NAME] [--transcribe] [--whisper-model
 repair-guide peek <dir> 4:31 4:33            # full-size frames at exact times
 repair-guide peek <dir> --range 4:20-4:40    # mini contact sheet across a span
 repair-guide build <dir> [--image-width 1280] [--max-kb 150] [--no-refine] [--purge-video]
+repair-guide joplin push <dir> [--notebook 'A/B'] [--force]
+repair-guide joplin status | auth
 repair-guide manual add|list|remove|torque|search|page …
 repair-guide torque 175 ft-lb                # → 175 ft·lb · 237 N·m
 repair-guide schema                          # JSON Schema for steps.json
@@ -119,7 +137,6 @@ claude --plugin-dir .          # try the skill against your working copy
 
 ## Roadmap
 
-- Push guides straight into Joplin through its Web Clipper API (no manual import)
 - Join multi-file GoPro recordings (GOPR/GP01/GP02 chapters) into one guide
 - Optional arrow/circle annotations on screenshots
 - Multi-video synthesis (merge two videos of the same job)

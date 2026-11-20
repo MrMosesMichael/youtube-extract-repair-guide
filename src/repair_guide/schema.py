@@ -131,6 +131,10 @@ class Guide(_Model):
     steps: list[Step] = Field(min_length=1)
     torque_specs: list[TorqueSpec] = Field(default_factory=list)
     reassembly_notes: list[str] = Field(default_factory=list, description="Anything to watch on the way back together.")
+    tags: list[str] = Field(
+        default_factory=list,
+        description="1–3 lowercase Joplin tags for the vehicle system worked on, e.g. ['brakes'], ['steering', 'suspension'].",
+    )
 
     @model_validator(mode="after")
     def _refs(self) -> Guide:

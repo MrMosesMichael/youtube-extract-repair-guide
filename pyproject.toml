@@ -1,6 +1,6 @@
 [project]
 name = "repair-guide"
-version = "0.1.0"
+version = "0.2.0"
 description = "Turn automotive repair videos into step-by-step guides with screenshots, tool lists, torque specs, and timestamp links."
 readme = "README.md"
 license = "MIT"

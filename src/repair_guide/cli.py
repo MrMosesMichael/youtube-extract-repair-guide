@@ -164,15 +164,19 @@ def _format_validation(err: ValidationError) -> str:
     return "\n".join(lines)
 
 
-def cmd_build(a: argparse.Namespace, cfg: dict) -> None:
-    d, meta = _guide_dir(a.dir)
+def _load_guide(d: Path) -> Guide:
     steps_path = d / "steps.json"
     if not steps_path.exists():
         raise UserError(f"No steps.json in {d}. Write it first (format: `repair-guide schema`).")
     try:
-        guide = Guide.model_validate_json(steps_path.read_text(encoding="utf-8"))
+        return Guide.model_validate_json(steps_path.read_text(encoding="utf-8"))
     except ValidationError as err:
         raise UserError("steps.json is invalid:\n" + _format_validation(err)) from err
+
+
+def cmd_build(a: argparse.Namespace, cfg: dict) -> None:
+    d, meta = _guide_dir(a.dir)
+    guide = _load_guide(d)
     problems = guide.check_times(meta.get("duration"))
     if problems:
         raise UserError("steps.json has timestamps outside the video:\n" + "\n".join(f"  - {p}" for p in problems))
@@ -209,7 +213,7 @@ def cmd_build(a: argparse.Namespace, cfg: dict) -> None:
     html_kb = (d / "guide.html").stat().st_size / 1024
     print(f"""
 Built: {d}
-  guide.md    — Markdown + images/ (import into Joplin: File › Import › MD - Markdown (Directory))
+  guide.md    — Markdown + images/ (push to Joplin: `repair-guide joplin push <dir>`)
   guide.html  — single self-contained file ({html_kb:.0f} KB), good for phone/AirDrop
   {len(guide.steps)} steps · {n_imgs} images · {total / 1024:.0f} KB total images""".rstrip())
     if missing:
@@ -333,6 +337,13 @@ def cmd_doctor(a: argparse.Namespace, cfg: dict) -> None:
     for name, m in cfg["manuals"].items():
         exists = Path(m["index"]).exists()
         print(f"{'✓' if exists else '✗'} manual '{name}': {m['path']}")
+    from . import joplin
+
+    try:
+        joplin.connect(cfg)
+        print("✓ Joplin push: ready")
+    except UserError as e:
+        print(f"· Joplin push: not available ({str(e).split('. ')[0]})")
     sys.exit(0 if ok else 1)
 
 
@@ -344,8 +355,51 @@ def cmd_config(a: argparse.Namespace, cfg: dict) -> None:
         cur = config.DEFAULTS[key]
         cfg[key] = int(val) if isinstance(cur, int) else val.split(",") if isinstance(cur, list) else val
         config.save(cfg)
-    print(json.dumps({k: v for k, v in cfg.items()}, indent=2))
+    shown = {k: ("<set>" if k == "joplin_token" and v else v) for k, v in cfg.items()}
+    print(json.dumps(shown, indent=2))
     print(f"# {config.config_path()}", file=sys.stderr)
+
+
+# --------------------------------------------------------------------------- joplin
+
+
+def cmd_joplin(a: argparse.Namespace, cfg: dict) -> None:
+    from . import joplin
+
+    if a.joplin_cmd == "status":
+        base = joplin.find_server(cfg)
+        print(f"✓ Joplin Data API at {base}")
+        client = joplin.connect(cfg)
+        n = len(client.get_all("/folders", "id"))
+        print(f"✓ token accepted ({n} notebooks)")
+        return
+    if a.joplin_cmd == "auth":
+        token = joplin.authorize(cfg)
+        cfg["joplin_token"] = token
+        config.save(cfg)
+        print(f"✓ token saved to {config.config_path()}")
+        return
+
+    d, meta = _guide_dir(a.dir)
+    guide = _load_guide(d)
+    try:
+        client = joplin.connect(cfg)
+    except joplin.JoplinUnavailable as e:
+        if a.if_available:
+            print(f"Joplin push skipped: {e}")
+            return
+        raise
+    try:
+        r = joplin.push(client, d, guide, meta, cfg, notebook=a.notebook, force=a.force)
+    except joplin.EditedInJoplin as e:
+        print(f"error: {e}", file=sys.stderr)
+        sys.exit(3)
+    verb = "Created" if r.created else "Updated"
+    print(f"""{verb} Joplin note: {guide.title}
+  notebook: {' › '.join(r.folder)}{'' if r.created or a.notebook else ' (or wherever you moved it)'}
+  images:   {r.uploaded} uploaded, {r.reused} unchanged, {r.deleted} old removed
+  tags:     {', '.join(r.tags)}
+  open:     joplin://x-callback-url/openNote?id={r.note_id}""")
 
 
 # --------------------------------------------------------------------------- parser
@@ -408,6 +462,17 @@ def build_parser() -> argparse.ArgumentParser:
     x.add_argument("name")
     x.add_argument("path")
     m.set_defaults(func=cmd_manual)
+
+    j = sub.add_parser("joplin", help="Push guides into Joplin (needs its Web Clipper service enabled).")
+    jsub = j.add_subparsers(dest="joplin_cmd", required=True)
+    x = jsub.add_parser("push", help="Create or update the Joplin note for a guide (images become attachments)")
+    x.add_argument("dir")
+    x.add_argument("--notebook", help="Notebook path like 'Truck/Steering' (default: Repair Guides › <vehicle>)")
+    x.add_argument("--force", action="store_true", help="Overwrite edits made to the note inside Joplin")
+    x.add_argument("--if-available", action="store_true", help="Exit quietly (0) if Joplin isn't running")
+    jsub.add_parser("status", help="Check that Joplin's API is reachable and the token works")
+    jsub.add_parser("auth", help="Get a new API token (click Grant in Joplin)")
+    j.set_defaults(func=cmd_joplin)
 
     s = sub.add_parser("torque", help="Convert a torque value, e.g. `repair-guide torque 175 ft-lb`")
     s.add_argument("value", help="Number or range like 18-22")
